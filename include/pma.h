@@ -28,39 +28,45 @@ list should be most efficient here
 
 
 struct pma {
-  struct list_head* head; // Tracks free blocks
+  struct list_head head; // Tracks free blocks
+  size_t bs; // Block size
+  size_t ps; // Pool size
   size_t used; // Currently used memory
   size_t peak; // Peak memory usage
   void* ptr;
 };
 
-void pma_init(struct pma* self) {
-  self->ptr = malloc(POOL_SIZE);
+void pma_init(struct pma* self, size_t block_size, size_t pool_size) {
+  self->head.first = NULL;
+  self->ptr = malloc(pool_size);
 
+  self->bs = block_size;
+  self->ps = pool_size;
+  
   self->used = 0;
   self->peak = 0;
-  const int nBlocks = POOL_SIZE / BLOCK_SIZE;
+  const int nBlocks = pool_size / block_size;
   for (int i = 0; i < nBlocks; ++i) {
-     ptr_t address = (ptr_t)(self->ptr + i * BLOCK_SIZE);
-    list_add((struct list_node*)address, self->head);
+     ptr_t address = (ptr_t)(self->ptr + i * block_size);
+    list_add((struct list_node*)address, &self->head);
   }
 }
 
 void* pmalloc(struct pma* self) {
-  if (self->used + BLOCK_SIZE > POOL_SIZE) return NULL; // Out of memory
+  if (list_empty(&self->head)) return NULL; // Out of memory
   // Only serve memory of BLOCK_SIZE,
-  struct list_node* free_ptr = (struct list_node*)self->head->first;
-  list_del(self->head);
+  struct list_node* free_ptr = (struct list_node*)self->head.first;
+  list_del(&self->head);
   
-  self->used += BLOCK_SIZE;
+  self->used += self->bs;
   self->peak = max(self->peak, self->used);
 
-  return (void*)(free_ptr + sizeof(struct list_node*));
+  return (void*)free_ptr;
 }
 
 void pfree(struct pma* self, void* ptr) {
-  self->used -= BLOCK_SIZE;
-  list_add((struct list_node*)(ptr - sizeof(struct list_node*)), self->head);
+  self->used -= self->bs;
+  list_add((struct list_node*)ptr, &self->head);
 }
 
 void pma_exit(struct pma* self) {

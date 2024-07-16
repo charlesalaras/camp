@@ -25,7 +25,13 @@ bool list_add(struct list_node* new, struct list_head* head) {
     old_entry = entry;
     new->next = entry;
     // Non-atomic don't run this threaded
-    entry = head->first == old_entry ? head->first = new : head->first;
+    //entry = head->first == old_entry ? head->first = new : head->first;
+    if (head->first == old_entry) {
+      head->first = new;
+      break;
+    } else {
+      entry = head->first;
+    }
     if (entry == old_entry) break;
   }
 
@@ -40,7 +46,13 @@ bool list_del(struct list_head* head) {
     if (entry == NULL) return NULL;
     old_entry = entry;
     next = entry->next;
-    entry = head->first == old_entry ? head->first = next : head->first;
+    //entry = head->first == old_entry ? head->first = next : head->first;
+    if (head->first == old_entry) {
+      head->first = next;
+      break;
+    } else {
+      entry = head->first;
+    }
     if (entry == old_entry) break;
   }
 
