@@ -132,18 +132,13 @@ void tsort(struct graph* g) {
   int j;
   int curr_u;
   while (s_size > 0) {
-    for (int i = 0; i < g->v - 1; i++) printf("%d ", s[i]);
-    s_size--;
-    curr_u = s[s_size]; 
+    curr_u = s[--s_size]; 
     g->ordering[i] = curr_u; // remove node n from stack S & add node n to list L
     i++;
     for (j = 0; j < g->alist[curr_u]->od; j++) { // for each node from n to m
       int curr_v = g->alist[curr_u]->list[j]; // current m node number
-      if (g->alist[curr_v]->id == 1) { // if removing this edge removes it from graph
-        s[s_size] = curr_v; // add node back to S
-        s_size++;
-      }
-      g->alist[curr_v]->id--;
+      if (g->alist[curr_v]->id == 1) s[s_size++] = curr_v; // add node back to S
+      g->alist[curr_v]->id--; // remove the edge
     }
   }
   /*
